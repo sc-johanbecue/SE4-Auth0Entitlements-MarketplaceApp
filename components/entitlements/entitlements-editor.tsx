@@ -359,9 +359,6 @@ export function EntitlementsEditor() {
         {pageId && entitlementsFieldAvailable && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <span className="text-sm font-medium block">
-                {ENTITLEMENTS_FIELD_NAME}
-              </span>
               <CheckboxList
                 options={entitlementOptions}
                 selectedGuids={selectedEntitlements}
@@ -403,9 +400,6 @@ export function EntitlementsEditor() {
           {pageId && rolesFieldAvailable && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <span className="text-sm font-medium block">
-                  {ROLES_FIELD_NAME}
-                </span>
                 <CheckboxList
                   options={roleOptions}
                   selectedGuids={selectedRoles}
