@@ -1,10 +1,7 @@
-/**
- * Entitlements field name and source path for the multist list.
- * Source is the Sitecore folder whose children can be selected as entitlement values.
- */
-export const ENTITLEMENTS_FIELD_NAME = "Entitlements";
-export const ENTITLEMENTS_SOURCE_PATH =
-  "/sitecore/content/adp-digital-web-assets/ADP Portal/Data/Entitlements";
+export {
+  ENTITLEMENTS_FIELD_NAME,
+  ENTITLEMENTS_SOURCE_PATH,
+} from "@/lib/field-config";
 
 /**
  * Parse the raw Entitlements field value (multist list) into an array of item IDs.

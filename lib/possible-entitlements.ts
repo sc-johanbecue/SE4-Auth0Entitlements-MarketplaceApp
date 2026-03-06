@@ -1,5 +1,5 @@
-import { ENTITLEMENTS_SOURCE_PATH } from "@/lib/entitlements";
-import type { AuthoringGraphQLClient } from "@/lib/selected-entitlements";
+import type { AuthoringGraphQLClient } from "@/lib/authoring-client";
+import { ENTITLEMENTS_SOURCE_PATH } from "@/lib/field-config";
 
 export const AUTH0_FIELD_NAME = "Auth0";
 
