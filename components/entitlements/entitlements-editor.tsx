@@ -362,7 +362,7 @@ export function EntitlementsEditor() {
             </div>
             <div className="space-y-2">
               <span className="text-sm font-medium block">
-                {OPERATOR_FIELD_TITLE}
+                {ENTITLEMENTS_FIELD_NAME}
               </span>
               <CheckboxList
                 options={entitlementOptions}
@@ -391,7 +391,7 @@ export function EntitlementsEditor() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <span className="text-sm font-medium block">
-                  {ROLES_OPERATOR_FIELD_NAME}
+                  {OPERATOR_FIELD_TITLE}
                 </span>
                 {rolesOperatorError ? (
                   <p className="text-sm text-red-600">{rolesOperatorError}</p>
