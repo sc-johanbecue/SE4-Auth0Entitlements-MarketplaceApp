@@ -16,5 +16,3 @@ export const ROLES_SOURCE_PATH =
   "/sitecore/content/adp-digital-web-assets/ADP Portal/Data/Roles";
 
 export const ROLES_OPERATOR_FIELD_NAME = "RolesOperator";
-
-export const OPERATOR_FIELD_TITLE = "Operator";

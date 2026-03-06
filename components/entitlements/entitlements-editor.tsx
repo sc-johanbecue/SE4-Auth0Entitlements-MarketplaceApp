@@ -11,7 +11,6 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import {
   ENTITLEMENTS_FIELD_NAME,
   ENTITLEMENTS_OPERATOR_FIELD_NAME,
-  OPERATOR_FIELD_TITLE,
   ROLES_FIELD_NAME,
   ROLES_OPERATOR_FIELD_NAME,
 } from "@/lib/field-config";
@@ -333,7 +332,22 @@ export function EntitlementsEditor() {
   return (
     <Card style="outline">
       <CardHeader>
-        <CardTitle>Entitlements</CardTitle>
+        <div className="flex flex-wrap items-center gap-4">
+          <CardTitle>Entitlements</CardTitle>
+          {pageId &&
+            entitlementsFieldAvailable &&
+            (entitlementsOperatorError ? (
+              <p className="text-sm text-red-600">{entitlementsOperatorError}</p>
+            ) : (
+              <RadioGroup
+                name="entitlements-operator"
+                options={operatorRadioOptions}
+                value={displayEntitlementsOperator}
+                onChange={handleEntitlementsOperatorChange}
+                disabled={entitlementsLoading || optionsLoading}
+              />
+            ))}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {pageId && entitlementsUnavailable && (
@@ -344,22 +358,6 @@ export function EntitlementsEditor() {
         )}
         {pageId && entitlementsFieldAvailable && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <span className="text-sm font-medium block">
-                {OPERATOR_FIELD_TITLE}
-              </span>
-              {entitlementsOperatorError ? (
-                <p className="text-sm text-red-600">{entitlementsOperatorError}</p>
-              ) : (
-                <RadioGroup
-                  name="entitlements-operator"
-                  options={operatorRadioOptions}
-                  value={displayEntitlementsOperator}
-                  onChange={handleEntitlementsOperatorChange}
-                  disabled={entitlementsLoading || optionsLoading}
-                />
-              )}
-            </div>
             <div className="space-y-2">
               <span className="text-sm font-medium block">
                 {ENTITLEMENTS_FIELD_NAME}
@@ -380,7 +378,22 @@ export function EntitlementsEditor() {
         )}
 
         <div className="pt-6 border-t">
-          <h3 className="text-lg font-semibold mb-4">Roles</h3>
+          <div className="flex flex-wrap items-center gap-4 mb-4">
+            <h3 className="text-lg font-semibold">Roles</h3>
+            {pageId &&
+              rolesFieldAvailable &&
+              (rolesOperatorError ? (
+                <p className="text-sm text-red-600">{rolesOperatorError}</p>
+              ) : (
+                <RadioGroup
+                  name="roles-operator"
+                  options={operatorRadioOptions}
+                  value={displayRolesOperator}
+                  onChange={handleRolesOperatorChange}
+                  disabled={rolesLoading || optionsLoading}
+                />
+              ))}
+          </div>
           {pageId && rolesUnavailable && (
             <p className="text-sm text-muted-foreground">
               Roles cannot be configured for this page. The roles field is
@@ -389,22 +402,6 @@ export function EntitlementsEditor() {
           )}
           {pageId && rolesFieldAvailable && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <span className="text-sm font-medium block">
-                  {OPERATOR_FIELD_TITLE}
-                </span>
-                {rolesOperatorError ? (
-                  <p className="text-sm text-red-600">{rolesOperatorError}</p>
-                ) : (
-                  <RadioGroup
-                    name="roles-operator"
-                    options={operatorRadioOptions}
-                    value={displayRolesOperator}
-                    onChange={handleRolesOperatorChange}
-                    disabled={rolesLoading || optionsLoading}
-                  />
-                )}
-              </div>
               <div className="space-y-2">
                 <span className="text-sm font-medium block">
                   {ROLES_FIELD_NAME}
