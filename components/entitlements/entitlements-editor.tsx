@@ -7,6 +7,7 @@ import {
 } from "@/components/providers/marketplace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup } from "@/components/ui/radio-group";
 import {
   ENTITLEMENTS_FIELD_NAME,
   ENTITLEMENTS_OPERATOR_FIELD_NAME,
@@ -26,13 +27,17 @@ import {
   getPossibleRoles,
   type Option as RoleOption,
 } from "@/lib/possible-roles";
+import { saveDroplink } from "@/lib/save-droplink";
 import { saveField } from "@/lib/save-field";
 import {
   type AuthoringGraphQLClient,
   getSelectedEntitlements,
 } from "@/lib/selected-entitlements";
+import { getSelectedDroplink } from "@/lib/selected-droplink";
 import { getSelectedField } from "@/lib/selected-field";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
+const DEFAULT_OPERATOR_NAME = "Any";
 
 interface CheckboxListProps {
   options: { itemId: string; name: string }[];
@@ -81,6 +86,11 @@ function CheckboxList({
   );
 }
 
+function getDefaultOperatorId(options: { itemId: string; name: string }[]): string | null {
+  const anyOpt = options.find((o) => o.name === DEFAULT_OPERATOR_NAME);
+  return anyOpt ? formatItemIdAsGuid(anyOpt.itemId) : options[0] ? formatItemIdAsGuid(options[0].itemId) : null;
+}
+
 export function EntitlementsEditor() {
   const client = useMarketplaceClient();
   const appContext = useAppContext();
@@ -109,7 +119,7 @@ export function EntitlementsEditor() {
     new Set(),
   );
   const [selectedEntitlementsOperator, setSelectedEntitlementsOperator] =
-    useState<Set<string>>(new Set());
+    useState<string | null>(null);
   const [entitlementsError, setEntitlementsError] = useState<string | null>(null);
   const [entitlementsOperatorError, setEntitlementsOperatorError] = useState<
     string | null
@@ -123,14 +133,31 @@ export function EntitlementsEditor() {
   const [rolesLoading, setRolesLoading] = useState(false);
   const [rolesFieldAvailable, setRolesFieldAvailable] = useState(true);
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
-  const [selectedRolesOperator, setSelectedRolesOperator] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedRolesOperator, setSelectedRolesOperator] = useState<
+    string | null
+  >(null);
   const [rolesError, setRolesError] = useState<string | null>(null);
   const [rolesOperatorError, setRolesOperatorError] = useState<string | null>(
     null,
   );
   const [rolesSaveError, setRolesSaveError] = useState<string | null>(null);
+
+  const operatorRadioOptions = useMemo(
+    () =>
+      operatorOptions.map((o) => ({
+        value: formatItemIdAsGuid(o.itemId),
+        label: o.name,
+      })),
+    [operatorOptions],
+  );
+  const defaultEntitlementsOperatorId = useMemo(
+    () => getDefaultOperatorId(operatorOptions),
+    [operatorOptions],
+  );
+  const defaultRolesOperatorId = useMemo(
+    () => getDefaultOperatorId(operatorOptions),
+    [operatorOptions],
+  );
 
   // Load entitlements + operator (initial load)
   useEffect(() => {
@@ -144,7 +171,7 @@ export function EntitlementsEditor() {
           contextId,
           pageId,
         }),
-        getSelectedField({
+        getSelectedDroplink({
           client: client as AuthoringGraphQLClient,
           contextId,
           pageId,
@@ -154,9 +181,7 @@ export function EntitlementsEditor() {
       setSelectedEntitlements(
         new Set(entRes.entitlementIds.map((id) => formatItemIdAsGuid(id))),
       );
-      setSelectedEntitlementsOperator(
-        new Set(opRes.ids.map((id) => formatItemIdAsGuid(id))),
-      );
+      setSelectedEntitlementsOperator(opRes.id);
       setEntitlementsFieldAvailable(entRes.fieldAvailable);
       setEntitlementsError(entRes.error);
       setEntitlementsOperatorError(opRes.error);
@@ -178,7 +203,7 @@ export function EntitlementsEditor() {
           pageId,
           fieldName: ROLES_FIELD_NAME,
         }),
-        getSelectedField({
+        getSelectedDroplink({
           client: client as AuthoringGraphQLClient,
           contextId,
           pageId,
@@ -188,9 +213,7 @@ export function EntitlementsEditor() {
       setSelectedRoles(
         new Set(rolesRes.ids.map((id) => formatItemIdAsGuid(id))),
       );
-      setSelectedRolesOperator(
-        new Set(opRes.ids.map((id) => formatItemIdAsGuid(id))),
-      );
+      setSelectedRolesOperator(opRes.id);
       setRolesFieldAvailable(rolesRes.fieldAvailable);
       setRolesError(rolesRes.error);
       setRolesOperatorError(opRes.error);
@@ -246,16 +269,39 @@ export function EntitlementsEditor() {
     [client, contextId, pageId],
   );
 
+  const createOperatorChangeHandler = useCallback(
+    (
+      fieldName: string,
+      setSelected: React.Dispatch<React.SetStateAction<string | null>>,
+      setSaveError: React.Dispatch<React.SetStateAction<string | null>>,
+    ) =>
+      async (value: string) => {
+        if (!client || !contextId || !pageId) return;
+        setSelected(value);
+        setSaveError(null);
+        const { error } = await saveDroplink({
+          client: client as AuthoringGraphQLClient,
+          contextId,
+          pageId,
+          fieldName,
+          id: value,
+        });
+        if (error) {
+          setSaveError(error);
+        }
+      },
+    [client, contextId, pageId],
+  );
+
   const handleEntitlementsToggle = createToggleHandler(
     ENTITLEMENTS_FIELD_NAME,
     setSelectedEntitlements,
     selectedEntitlements,
     setEntitlementsSaveError,
   );
-  const handleEntitlementsOperatorToggle = createToggleHandler(
+  const handleEntitlementsOperatorChange = createOperatorChangeHandler(
     ENTITLEMENTS_OPERATOR_FIELD_NAME,
     setSelectedEntitlementsOperator,
-    selectedEntitlementsOperator,
     setEntitlementsSaveError,
   );
   const handleRolesToggle = createToggleHandler(
@@ -264,10 +310,9 @@ export function EntitlementsEditor() {
     selectedRoles,
     setRolesSaveError,
   );
-  const handleRolesOperatorToggle = createToggleHandler(
+  const handleRolesOperatorChange = createOperatorChangeHandler(
     ROLES_OPERATOR_FIELD_NAME,
     setSelectedRolesOperator,
-    selectedRolesOperator,
     setRolesSaveError,
   );
 
@@ -278,6 +323,11 @@ export function EntitlementsEditor() {
     !entitlementsError;
   const rolesUnavailable =
     pageId && !rolesFieldAvailable && !rolesLoading && !rolesError;
+
+  const displayEntitlementsOperator =
+    selectedEntitlementsOperator ?? defaultEntitlementsOperatorId;
+  const displayRolesOperator =
+    selectedRolesOperator ?? defaultRolesOperatorId;
 
   return (
     <Card style="outline">
@@ -295,6 +345,22 @@ export function EntitlementsEditor() {
           <div className="space-y-4">
             <div className="space-y-2">
               <span className="text-sm font-medium block">
+                {ENTITLEMENTS_OPERATOR_FIELD_NAME}
+              </span>
+              {entitlementsOperatorError ? (
+                <p className="text-sm text-red-600">{entitlementsOperatorError}</p>
+              ) : (
+                <RadioGroup
+                  name="entitlements-operator"
+                  options={operatorRadioOptions}
+                  value={displayEntitlementsOperator}
+                  onChange={handleEntitlementsOperatorChange}
+                  disabled={entitlementsLoading || optionsLoading}
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <span className="text-sm font-medium block">
                 {ENTITLEMENTS_FIELD_NAME}
               </span>
               <CheckboxList
@@ -306,19 +372,6 @@ export function EntitlementsEditor() {
                 emptyMessage="No entitlements found."
               />
             </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium block">
-                {ENTITLEMENTS_OPERATOR_FIELD_NAME}
-              </span>
-              <CheckboxList
-                options={operatorOptions}
-                selectedGuids={selectedEntitlementsOperator}
-                onToggle={handleEntitlementsOperatorToggle}
-                loading={entitlementsLoading || optionsLoading}
-                error={entitlementsOperatorError}
-                emptyMessage="No operators found."
-              />
-            </div>
             {entitlementsSaveError && (
               <p className="text-sm text-red-600">{entitlementsSaveError}</p>
             )}
@@ -327,45 +380,48 @@ export function EntitlementsEditor() {
 
         <div className="pt-6 border-t">
           <h3 className="text-lg font-semibold mb-4">Roles</h3>
-        {pageId && rolesUnavailable && (
-          <p className="text-sm text-muted-foreground">
-            Roles cannot be configured for this page. The roles field is missing
-            on the template.
-          </p>
-        )}
-        {pageId && rolesFieldAvailable && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <span className="text-sm font-medium block">
-                {ROLES_FIELD_NAME}
-              </span>
-              <CheckboxList
-                options={roleOptions}
-                selectedGuids={selectedRoles}
-                onToggle={handleRolesToggle}
-                loading={rolesLoading || optionsLoading}
-                error={rolesError}
-                emptyMessage="No roles found."
-              />
+          {pageId && rolesUnavailable && (
+            <p className="text-sm text-muted-foreground">
+              Roles cannot be configured for this page. The roles field is
+              missing on the template.
+            </p>
+          )}
+          {pageId && rolesFieldAvailable && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <span className="text-sm font-medium block">
+                  {ROLES_OPERATOR_FIELD_NAME}
+                </span>
+                {rolesOperatorError ? (
+                  <p className="text-sm text-red-600">{rolesOperatorError}</p>
+                ) : (
+                  <RadioGroup
+                    name="roles-operator"
+                    options={operatorRadioOptions}
+                    value={displayRolesOperator}
+                    onChange={handleRolesOperatorChange}
+                    disabled={rolesLoading || optionsLoading}
+                  />
+                )}
+              </div>
+              <div className="space-y-2">
+                <span className="text-sm font-medium block">
+                  {ROLES_FIELD_NAME}
+                </span>
+                <CheckboxList
+                  options={roleOptions}
+                  selectedGuids={selectedRoles}
+                  onToggle={handleRolesToggle}
+                  loading={rolesLoading || optionsLoading}
+                  error={rolesError}
+                  emptyMessage="No roles found."
+                />
+              </div>
+              {rolesSaveError && (
+                <p className="text-sm text-red-600">{rolesSaveError}</p>
+              )}
             </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium block">
-                {ROLES_OPERATOR_FIELD_NAME}
-              </span>
-              <CheckboxList
-                options={operatorOptions}
-                selectedGuids={selectedRolesOperator}
-                onToggle={handleRolesOperatorToggle}
-                loading={rolesLoading || optionsLoading}
-                error={rolesOperatorError}
-                emptyMessage="No operators found."
-              />
-            </div>
-            {rolesSaveError && (
-              <p className="text-sm text-red-600">{rolesSaveError}</p>
-            )}
-          </div>
-        )}
+          )}
         </div>
       </CardContent>
     </Card>
