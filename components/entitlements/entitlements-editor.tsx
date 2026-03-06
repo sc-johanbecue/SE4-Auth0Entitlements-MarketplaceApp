@@ -11,6 +11,7 @@ import { RadioGroup } from "@/components/ui/radio-group";
 import {
   ENTITLEMENTS_FIELD_NAME,
   ENTITLEMENTS_OPERATOR_FIELD_NAME,
+  OPERATOR_FIELD_TITLE,
   ROLES_FIELD_NAME,
   ROLES_OPERATOR_FIELD_NAME,
 } from "@/lib/field-config";
@@ -345,7 +346,7 @@ export function EntitlementsEditor() {
           <div className="space-y-4">
             <div className="space-y-2">
               <span className="text-sm font-medium block">
-                {ENTITLEMENTS_OPERATOR_FIELD_NAME}
+                {OPERATOR_FIELD_TITLE}
               </span>
               {entitlementsOperatorError ? (
                 <p className="text-sm text-red-600">{entitlementsOperatorError}</p>
@@ -361,7 +362,7 @@ export function EntitlementsEditor() {
             </div>
             <div className="space-y-2">
               <span className="text-sm font-medium block">
-                {ENTITLEMENTS_FIELD_NAME}
+                {OPERATOR_FIELD_TITLE}
               </span>
               <CheckboxList
                 options={entitlementOptions}
